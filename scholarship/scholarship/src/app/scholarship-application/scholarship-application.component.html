@@ -1,0 +1,299 @@
+<div class="scholarship-container">
+  <header class="header">
+    <div class="logo">
+      <h1>ScholarHub</h1>
+    </div>
+    <nav class="navigation">
+      <ul>
+        <li><a routerLink="/home">Home</a></li>
+        <li><a routerLink="/live-status">My Applications</a></li>
+      </ul>
+    </nav>
+    <div class="user-actions">
+      <span class="user-name">Welcome, {{ userName }}!</span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="scholarship-application-container">
+    <div class="scholarship-header">
+      <h2>Apply for Scholarship</h2>
+      <div class="application-status">
+        <div class="step active">Application</div>
+        <div class="step">Review</div>
+        <div class="step">Disbursement</div>
+      </div>
+    </div>
+
+    <div class="scholarship-details" *ngIf="scholarship">
+      <h2>{{ scholarship.title }}</h2>
+      <div class="scholarship-banner">
+        <div class="banner-content">
+          <div class="scholarship-amount">₹{{ scholarship.amount }}</div>
+          <div class="deadline-info">
+            <span class="deadline-label">Application Deadline:</span>
+            <span class="deadline-date">{{ formatDate(scholarship.deadline) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="details-grid">
+        <div class="detail-item">
+          <span class="label">Provider</span>
+          <span class="value">{{ scholarship.provider }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Category</span>
+          <span class="value">{{ scholarship.category }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Age Eligibility</span>
+          <span class="value">{{ scholarship.age_range }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Income Criteria</span>
+          <span class="value">₹{{ scholarship.income_range }}</span>
+        </div>
+      </div>
+      <div class="description">
+        <h3>About This Scholarship</h3>
+        <p>{{ scholarship.description }}</p>
+      </div>
+    </div>
+
+    <div class="application-form-container" *ngIf="scholarship && !showSubmissionMessage">
+      <h3>Personal Information</h3>
+      <form [formGroup]="applicationForm" (ngSubmit)="submitApplication()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="studentName">Full Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="studentName" 
+              formControlName="studentName" 
+              placeholder="Enter your full name"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('studentName')?.invalid && applicationForm.get('studentName')?.touched"
+            >
+            <div *ngIf="applicationForm.get('studentName')?.invalid && applicationForm.get('studentName')?.touched" class="error-message">
+              Full name is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="studentEmail">Email Address <span class="required">*</span></label>
+            <input 
+              type="email" 
+              id="studentEmail" 
+              formControlName="studentEmail"
+              placeholder="Enter your email address"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('studentEmail')?.invalid && applicationForm.get('studentEmail')?.touched"
+            >
+            <div *ngIf="applicationForm.get('studentEmail')?.invalid && applicationForm.get('studentEmail')?.touched" class="error-message">
+              <span *ngIf="applicationForm.get('studentEmail')?.errors?.['required']">Email is required</span>
+              <span *ngIf="applicationForm.get('studentEmail')?.errors?.['email']">Please enter a valid email</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="age">Age <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="age" 
+              formControlName="age"
+              placeholder="Enter your age"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('age')?.invalid && applicationForm.get('age')?.touched"
+            >
+            <div *ngIf="applicationForm.get('age')?.invalid && applicationForm.get('age')?.touched" class="error-message">
+              <span *ngIf="applicationForm.get('age')?.errors?.['required']">Age is required</span>
+              <span *ngIf="applicationForm.get('age')?.errors?.['min'] || applicationForm.get('age')?.errors?.['max']">Age must be between 15 and 100</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="gender">Gender <span class="required">*</span></label>
+            <select 
+              id="gender" 
+              formControlName="gender"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('gender')?.invalid && applicationForm.get('gender')?.touched"
+            >
+              <option value="" disabled selected>Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+            <div *ngIf="applicationForm.get('gender')?.invalid && applicationForm.get('gender')?.touched" class="error-message">
+              Gender is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dob">Date of Birth <span class="required">*</span></label>
+            <input 
+              type="date" 
+              id="dob" 
+              formControlName="dob"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('dob')?.invalid && applicationForm.get('dob')?.touched"
+            >
+            <div *ngIf="applicationForm.get('dob')?.invalid && applicationForm.get('dob')?.touched" class="error-message">
+              Date of birth is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="fatherName">Father's Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="fatherName" 
+              formControlName="fatherName"
+              placeholder="Enter father's name"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('fatherName')?.invalid && applicationForm.get('fatherName')?.touched"
+            >
+            <div *ngIf="applicationForm.get('fatherName')?.invalid && applicationForm.get('fatherName')?.touched" class="error-message">
+              Father's name is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="motherName">Mother's Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="motherName" 
+              formControlName="motherName"
+              placeholder="Enter mother's name"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('motherName')?.invalid && applicationForm.get('motherName')?.touched"
+            >
+            <div *ngIf="applicationForm.get('motherName')?.invalid && applicationForm.get('motherName')?.touched" class="error-message">
+              Mother's name is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="annualIncome">Annual Family Income (₹) <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="annualIncome" 
+              formControlName="annualIncome"
+              placeholder="Enter annual income"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('annualIncome')?.invalid && applicationForm.get('annualIncome')?.touched"
+            >
+            <div *ngIf="applicationForm.get('annualIncome')?.invalid && applicationForm.get('annualIncome')?.touched" class="error-message">
+              <span *ngIf="applicationForm.get('annualIncome')?.errors?.['required']">Annual income is required</span>
+              <span *ngIf="applicationForm.get('annualIncome')?.errors?.['min']">Income cannot be negative</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bankAccountNumber">Bank Account Number <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="bankAccountNumber" 
+              formControlName="bankAccountNumber"
+              placeholder="Enter bank account number"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('bankAccountNumber')?.invalid && applicationForm.get('bankAccountNumber')?.touched"
+            >
+            <div *ngIf="applicationForm.get('bankAccountNumber')?.invalid && applicationForm.get('bankAccountNumber')?.touched" class="error-message">
+              <span *ngIf="applicationForm.get('bankAccountNumber')?.errors?.['required']">Bank account number is required</span>
+              <span *ngIf="applicationForm.get('bankAccountNumber')?.errors?.['pattern']">Invalid bank account number (8-20 digits)</span>
+            </div>
+          </div>
+        
+          <div class="form-group">
+            <label for="ifscCode">IFSC Code <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="ifscCode" 
+              formControlName="ifscCode"
+              placeholder="Enter IFSC code"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('ifscCode')?.invalid && applicationForm.get('ifscCode')?.touched"
+            >
+            <div *ngIf="applicationForm.get('ifscCode')?.invalid && applicationForm.get('ifscCode')?.touched" class="error-message">
+              <span *ngIf="applicationForm.get('ifscCode')?.errors?.['required']">IFSC code is required</span>
+              <span *ngIf="applicationForm.get('ifscCode')?.errors?.['pattern']">Invalid IFSC code (e.g., SBIN0001234)</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bankName">Bank Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="bankName" 
+              formControlName="bankName"
+              placeholder="Enter bank name"
+              aria-required="true"
+              [class.invalid]="applicationForm.get('bankName')?.invalid && applicationForm.get('bankName')?.touched"
+            >
+            <div *ngIf="applicationForm.get('bankName')?.invalid && applicationForm.get('bankName')?.touched" class="error-message">
+              Bank name is required
+            </div>
+          </div>
+        </div>
+
+        <h3>Required Documents <span class="document-note">(PDF Format Only)</span></h3>
+        <div class="documents-grid">
+          <div *ngFor="let doc of scholarship.required_documents" class="document-upload">
+            <div class="document-label">{{ doc }} <span class="required">*</span></div>
+            <div class="upload-container">
+              <label [for]="getDocumentId(doc)" class="upload-btn" [class.uploaded]="isDocumentUploaded(doc)">
+                <span class="upload-icon" *ngIf="!isDocumentUploaded(doc)">+</span>
+                <span class="upload-icon check" *ngIf="isDocumentUploaded(doc)">✓</span>
+                {{ isDocumentUploaded(doc) ? 'Document Uploaded' : 'Upload PDF' }}
+              </label>
+              <input 
+                type="file" 
+                [id]="getDocumentId(doc)" 
+                accept="application/pdf" 
+                (change)="onFileSelected($event, doc)" 
+                style="display: none;"
+                aria-required="true"
+              >
+              <div *ngIf="isDocumentUploaded(doc)" class="file-name">
+                {{ documents[doc]?.name }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="terms-section">
+          <div class="terms-checkbox">
+            <input type="checkbox" id="terms" formControlName="terms">
+            <label for="terms">I confirm that all information provided is accurate and I meet the eligibility criteria</label>
+            <div *ngIf="applicationForm.get('terms')?.invalid && applicationForm.get('terms')?.touched" class="error-message">
+              You must agree to the terms
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="back-btn" (click)="goBack()">Back</button>
+          <button type="submit" class="submit-btn" [disabled]="applicationForm.invalid || !areAllDocumentsUploaded() || isSubmitting">
+            {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+          </button>
+        </div>
+
+        <div *ngIf="showSubmissionMessage" class="submission-message" [class.error]="submissionMessage.includes('Error')" aria-live="polite">
+          <span [innerHTML]="submissionMessage"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

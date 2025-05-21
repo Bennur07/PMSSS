@@ -1,0 +1,342 @@
+<div class="admin-dashboard">
+  <h1 class="title">Scholarship Admin Dashboard</h1>
+  
+  <div class="tabs">
+    <button [class.active]="activeTab === 'scholarships'" (click)="changeTab('scholarships')">
+      Manage Scholarships
+    </button>
+    <button [class.active]="activeTab === 'applications'" (click)="changeTab('applications')">
+      View All Applications
+    </button>
+    <button [class.active]="activeTab === 'finance'" (click)="changeTab('finance')">
+      Finance
+    </button>
+    <button [class.active]="activeTab === 'add-scholarship'" (click)="changeTab('add-scholarship')">
+      Add New Scholarship
+    </button>
+  </div>
+
+  <div *ngIf="activeTab === 'scholarships'" class="section">
+    <h2>Scholarships</h2>
+    <div class="scholarship-list">
+      <div *ngIf="scholarships.length === 0" class="empty-state">
+        No scholarships found. Create one to get started.
+      </div>
+      <table *ngIf="scholarships.length > 0">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Provider</th>
+            <th>Amount</th>
+            <th>Deadline</th>
+            <th>Category</th>
+            <th>Applications</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let scholarship of scholarships">
+            <td>{{ scholarship.title }}</td>
+            <td>{{ scholarship.provider }}</td>
+            <td>{{ scholarship.amount }}</td>
+            <td>{{ scholarship.deadline | date }}</td>
+            <td>{{ scholarship.category }}</td>
+            <td>
+              <button class="btn-applications" (click)="viewApplications(scholarship)">
+                View Applications
+              </button>
+            </td>
+            <td class="actions">
+              <button class="btn-edit" (click)="editScholarship(scholarship)">Edit</button>
+              <button class="btn-delete" (click)="deleteScholarship(scholarship.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div *ngIf="activeTab === 'applications'" class="section">
+    <h2>All Applications</h2>
+    <div class="applications-list">
+      <div *ngIf="applications.length === 0" class="empty-state">
+        No applications received yet.
+      </div>
+      <table *ngIf="applications.length > 0">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Scholarship</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th>Verification</th>
+            <th>Remarks</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let application of applications">
+            <td>{{ application.student_name }}</td>
+            <td>{{ application.student_email }}</td>
+            <td>{{ getScholarshipTitle(application.scholarship_id) }}</td>
+            <td>{{ application.submitted_at | date:'medium' }}</td>
+            <td>
+              <span class="status-badge" [class]="application.status">
+                {{ application.status }}
+              </span>
+            </td>
+            <td>
+              {{ application.verification_result.documentValid ? 'Valid' : 'Invalid' }}
+            </td>
+            <td>
+              <ul *ngIf="application.remarks.length > 0">
+                <li *ngFor="let remark of application.remarks">{{ remark }}</li>
+              </ul>
+              <span *ngIf="!application.remarks.length">-</span>
+            </td>
+            <td class="actions">
+              <select 
+                [value]="application.status" 
+                (change)="onStatusChange($event, application)"
+              >
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'finance'" class="section">
+    <h2>Finance - Approved Scholarships</h2>
+    <div class="finance-list">
+      <div *ngIf="approvedApplications.length === 0" class="empty-state">
+        No approved applications found for payment processing.
+      </div>
+      <table *ngIf="approvedApplications.length > 0">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Scholarship</th>
+            <th>Amount</th>
+            <th>Approval Date</th>
+            <th>Payment Status</th>
+            <th>Payment Reference</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let application of approvedApplications">
+            <td>{{ application.student_name }}</td>
+            <td>{{ application.student_email }}</td>
+            <td>{{ getScholarshipTitle(application.scholarship_id) }}</td>
+            <td>{{ getScholarshipAmount(application.scholarship_id) }}</td>
+            <td>{{ application.submitted_at | date:'mediumDate' }}</td>
+            <td>
+              <span class="payment-status" [class]="application.payment_status">
+                {{ application.payment_status || 'pending' }}
+              </span>
+            </td>
+            <td>{{ application.payment_reference || '-' }}</td>
+            <td class="actions">
+              <button 
+                class="btn-make-payment" 
+                [disabled]="application.payment_status === 'completed'"
+                (click)="makePayment(application)"
+              >
+                {{ application.payment_status === 'completed' ? 'Paid' : 'Make Payment' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="showPaymentModal" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h3>Process Payment for {{ selectedApplication?.student_name || 'Unknown' }}</h3>
+            <button class="btn-close" (click)="closePaymentModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Scholarship:</strong> {{ selectedApplication && selectedApplication.scholarship_id ? getScholarshipTitle(selectedApplication.scholarship_id) : 'Unknown' }}</p>
+            <p><strong>Amount:</strong> {{ selectedApplication && selectedApplication.scholarship_id ? getScholarshipAmount(selectedApplication.scholarship_id) : 'Unknown' }}</p>
+            <div class="bank-details">
+              <h4>Bank Details</h4>
+              <p><strong>Account Number:</strong> {{ selectedApplication?.bank_account_number || 'Not provided' }}</p>
+              <p><strong>Bank Name:</strong> {{ selectedApplication?.bank_name || 'Not provided' }}</p>
+              <p><strong>IFSC Code:</strong> {{ selectedApplication?.ifsc_code || 'Not provided' }}</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" (click)="closePaymentModal()">Cancel</button>
+            <button class="btn-submit" (click)="confirmPayment()">Mark as Paid</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div *ngIf="activeTab === 'applications-detail'" class="section">
+    <div class="header-with-action">
+      <h2>
+        Applications for: {{ selectedScholarship?.title }}
+      </h2>
+      <button class="btn-back" (click)="backToScholarships()">Back to Scholarships</button>
+    </div>
+    
+    <div class="applications-list">
+      <div *ngIf="scholarshipApplications.length === 0" class="empty-state">
+        No applications received for this scholarship yet.
+      </div>
+      <table *ngIf="scholarshipApplications.length > 0">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th>Verification</th>
+            <th>Remarks</th>
+            <th>Documents</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let application of scholarshipApplications">
+            <td>{{ application.student_name }}</td>
+            <td>{{ application.student_email }}</td>
+            <td>{{ application.submitted_at | date:'medium' }}</td>
+            <td>
+              <span class="status-badge" [class]="application.status">
+                {{ application.status }}
+              </span>
+            </td>
+            <td>
+              {{ application.verification_result.documentValid ? 'Valid' : 'Invalid' }}
+            </td>
+            <td>
+              <ul *ngIf="application.remarks.length > 0">
+                <li *ngFor="let remark of application.remarks">{{ remark }}</li>
+              </ul>
+              <span *ngIf="!application.remarks.length">-</span>
+            </td>
+            <td>
+              <div *ngFor="let doc of application.documents">
+                <a href="javascript:void(0)" (click)="viewDocument(doc.file_id)">{{ doc.name }}</a>
+              </div>
+            </td>
+            <td class="actions">
+              <select 
+                [value]="application.status" 
+                (change)="onStatusChange($event, application)"
+              >
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div *ngIf="activeTab === 'add-scholarship'" class="section">
+    <h2>{{ isEditMode ? 'Edit Scholarship' : 'Add New Scholarship' }}</h2>
+    <form [formGroup]="scholarshipForm" (ngSubmit)="submitScholarship()" class="scholarship-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="title">Title *</label>
+          <input id="title" type="text" formControlName="title" />
+          <div *ngIf="scholarshipForm.get('title')?.invalid && scholarshipForm.get('title')?.touched" class="error">
+            Title is required
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="provider">Provider *</label>
+          <input id="provider" type="text" formControlName="provider" />
+          <div *ngIf="scholarshipForm.get('provider')?.invalid && scholarshipForm.get('provider')?.touched" class="error">
+            Provider is required
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="amount">Amount *</label>
+          <input id="amount" type="text" formControlName="amount" placeholder="e.g. ₹50,000" />
+          <div *ngIf="scholarshipForm.get('amount')?.invalid && scholarshipForm.get('amount')?.touched" class="error">
+            Amount is required
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="deadline">Deadline *</label>
+          <input id="deadline" type="date" formControlName="deadline" />
+          <div *ngIf="scholarshipForm.get('deadline')?.invalid && scholarshipForm.get('deadline')?.touched" class="error">
+            Deadline is required
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="category">Category *</label>
+          <select id="category" formControlName="category">
+            <option value="">Select Category</option>
+            <option *ngFor="let category of categories" [value]="category">
+              {{ category }}
+            </option>
+          </select>
+          <div *ngIf="scholarshipForm.get('category')?.invalid && scholarshipForm.get('category')?.touched" class="error">
+            Category is required
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="age_range">Age Range</label>
+          <input id="age_range" type="text" formControlName="age_range" placeholder="e.g. 18-25" />
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="income_range">Income Range</label>
+          <input id="income_range" type="text" formControlName="income_range" placeholder="e.g. ₹0-₹350000" />
+        </div>
+      </div>
+      
+      <div class="form-group full-width">
+        <label for="description">Description *</label>
+        <textarea id="description" formControlName="description" rows="4"></textarea>
+        <div *ngIf="scholarshipForm.get('description')?.invalid && scholarshipForm.get('description')?.touched" class="error">
+          Description is required
+        </div>
+      </div>
+      <br>
+      <br>
+      <div class="form-group full-width">
+        <label>Required Documents</label>
+        <div formArrayName="required_documents" class="documents-list">
+          <div *ngFor="let document of requiredDocuments.controls; let i = index" class="document-item">
+            <input type="text" [formControlName]="i" placeholder="e.g. Transcript, ID, Essay" />
+            <button type="button" class="btn-remove" (click)="removeDocument(i)">Remove</button>
+          </div>
+          <button type="button" class="btn-add" (click)="addDocument()">Add Document</button>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="resetForm()">Cancel</button>
+        <button type="submit" class="btn-submit" [disabled]="scholarshipForm.invalid">
+          {{ isEditMode ? 'Update Scholarship' : 'Create Scholarship' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

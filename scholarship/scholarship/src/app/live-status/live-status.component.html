@@ -1,0 +1,176 @@
+<div class="my-applications-container">
+  <header class="header">
+    <div class="logo">
+      <h1>ScholarHub</h1>
+    </div>
+    <nav class="navigation">
+      <ul>
+        <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a></li>
+        <li><a routerLink="/live-status" routerLinkActive="active">My Applications</a></li>
+      </ul>
+    </nav>
+    <div class="user-actions">
+      <span class="user-name">Welcome, {{ userName }}!</span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="applications-hero">
+      <div class="hero-content">
+        <h1>My Scholarship Applications</h1>
+        <p>Track the status of all your scholarship applications in one place</p>
+      </div>
+    </section>
+
+    <div *ngIf="loading" class="loading">
+      <p>Loading applications...</p>
+    </div>
+    
+    <div *ngIf="error" class="error">
+      <p>{{ error }}</p>
+    </div>
+    
+    <section class="applications-list" *ngIf="!loading && !error && !showDetailView">
+      <h2>Your Applications</h2>
+      
+      <div class="applications-summary">
+        <div class="summary-card">
+          <div class="summary-value">{{ totalApplications }}</div>
+          <div class="summary-label">Total Applications</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">{{ awardedCount }}</div>
+          <div class="summary-label">Awarded</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">{{ inProgressCount }}</div>
+          <div class="summary-label">In Progress</div>
+        </div>
+      </div>
+      
+      <div class="applications-table">
+        <div class="table-header">
+          <div class="col-scholarship">Scholarship</div>
+          <div class="col-provider">Provider</div>
+          <div class="col-amount">Amount</div>
+          <div class="col-submitted">Submitted</div>
+          <div class="col-status">Status</div>
+          <div class="col-actions">Actions</div>
+        </div>
+        
+        <div class="table-row" *ngFor="let app of applications">
+          <div class="col-scholarship">{{ app.title }}</div>
+          <div class="col-provider">{{ app.provider }}</div>
+          <div class="col-amount">{{ app.amount }}</div>
+          <div class="col-submitted">{{ app.submittedDate }}</div>
+          <div class="col-status">
+            <span class="status-badge" [ngClass]="getStatusClass(app.currentStatus)">
+              {{ app.currentStatus }}
+            </span>
+          </div>
+          <div class="col-actions">
+            <button class="view-details-btn" (click)="viewApplicationDetails(app)">View Details</button>
+            <button class="withdraw-btn" (click)="withdrawApplication(app)">Withdraw Application</button>
+          </div>
+        </div>
+        
+        <div *ngIf="applications.length === 0" class="no-applications">
+          <p>You have not submitted any application.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="application-detail" *ngIf="showDetailView && selectedApplication">
+      <div class="detail-header">
+        <button class="back-btn" (click)="closeDetailView()">← Back to Applications</button>
+        <h2>{{ selectedApplication.title }}</h2>
+      </div>
+      
+      <div class="application-overview">
+        <div class="overview-item">
+          <span class="item-label">Provider:</span>
+          <span class="item-value">{{ selectedApplication.provider }}</span>
+        </div>
+        <div class="overview-item">
+          <span class="item-label">Amount:</span>
+          <span class="item-value">{{ selectedApplication.amount }}</span>
+        </div>
+        <div class="overview-item">
+          <span class="item-label">Deadline:</span>
+          <span class="item-value">{{ selectedApplication.deadline }}</span>
+        </div>
+        <div class="overview-item">
+          <span class="item-label">Submitted:</span>
+          <span class="item-value">{{ selectedApplication.submittedDate }}</span>
+        </div>
+        <div class="overview-item">
+          <span class="item-label">Current Status:</span>
+          <span class="item-value status-badge" [ngClass]="getStatusClass(selectedApplication.currentStatus)">
+            {{ selectedApplication.currentStatus }}
+          </span>
+        </div>
+        <div class="overview-item" *ngIf="selectedApplication.remarks.length > 0">
+          <span class="item-label">Remarks:</span>
+          <span class="item-value">
+            <ul>
+              <li *ngFor="let remark of selectedApplication.remarks">{{ remark }}</li>
+            </ul>
+          </span>
+        </div>
+      </div>
+      
+      <div class="application-timeline">
+        <h3>Application Timeline</h3>
+        
+        <div class="timeline">
+          <div class="timeline-item" *ngFor="let status of selectedApplication.statusHistory">
+            <div class="timeline-marker" [ngClass]="getStatusClass(status.status)"></div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <span class="status-badge" [ngClass]="getStatusClass(status.status)">{{ status.status }}</span>
+                <span class="timeline-date">{{ status.date }}</span>
+              </div>
+              <div class="timeline-body" *ngIf="status.notes">
+                <p>{{ status.notes }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="application-actions">
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <h2>ScholarHub</h2>
+        <p>Connecting students with opportunities</p>
+      </div>
+      <div class="footer-links">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a routerLink="/">Home</a></li>
+          <li><a routerLink="/#about" fragment="about">About Us</a></li>
+          <li><a routerLink="/#contact" fragment="contact">Contact</a></li>
+          <li><a routerLink="/live-status">Live Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-social">
+        <h3>Connect With Us</h3>
+        <div class="social-icons">
+          <a href="#" class="social-icon">FB</a>
+          <a href="#" class="social-icon">TW</a>
+          <a href="#" class="social-icon">IG</a>
+          <a href="#" class="social-icon">LI</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 ScholarHub. All Rights Reserved.</p>
+    </div>
+  </footer>
+</div>

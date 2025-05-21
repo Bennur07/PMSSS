@@ -1,0 +1,57 @@
+<div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Scholarship Portal</h1>
+        <h2>Sign In</h2>
+      </div>
+      
+      <form [formGroup]="signinForm" (ngSubmit)="onSubmit()" class="auth-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            formControlName="email" 
+            placeholder="Your email address"
+            [ngClass]="{'invalid': signinForm.get('email')?.invalid && signinForm.get('email')?.touched}"
+          >
+          <div class="error-message" *ngIf="signinForm.get('email')?.invalid && signinForm.get('email')?.touched">
+            <span *ngIf="signinForm.get('email')?.errors?.['required']">Email is required</span>
+            <span *ngIf="signinForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            formControlName="password" 
+            placeholder="Your password"
+            [ngClass]="{'invalid': signinForm.get('password')?.invalid && signinForm.get('password')?.touched}"
+          >
+          <div class="error-message" *ngIf="signinForm.get('password')?.invalid && signinForm.get('password')?.touched">
+            <span *ngIf="signinForm.get('password')?.errors?.['required']">Password is required</span>
+            <span *ngIf="signinForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</span>
+          </div>
+        </div>
+        
+        <div class="error-alert" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+        
+        <button 
+          type="submit" 
+          class="btn-primary" 
+          [disabled]="signinForm.invalid || loading"
+        >
+          <span *ngIf="!loading">Sign In</span>
+          <span *ngIf="loading">Signing in...</span>
+        </button>
+        
+        <div class="auth-links">
+          <p>Don't have an account? <a routerLink="/auth/signup">Sign Up</a></p>
+        </div>
+      </form>
+    </div>
+  </div>
